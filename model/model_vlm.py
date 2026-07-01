@@ -69,7 +69,10 @@ class MiniMindVLM(MiniMindForCausalLM):
         if hasattr(image_inputs, 'keys'):
             image_inputs = {k: v.squeeze(1) if v.ndim > 2 and v.shape[1] == 1 else v for k, v in image_inputs.items()}
         with torch.no_grad():
-            outputs = vision_model(**image_inputs)
+            if hasattr(image_inputs, 'keys'):
+                outputs = vision_model(**image_inputs, interpolate_pos_encoding=True)
+            else:
+                outputs = vision_model(pixel_values=image_inputs, interpolate_pos_encoding=True)
         return outputs.last_hidden_state
 
     @torch.compiler.disable
@@ -116,7 +119,8 @@ class MiniMindVLM(MiniMindForCausalLM):
                 sample_val = next(iter(pixel_values.values()))
                 if sample_val.ndim == 5:
                     bs, num = sample_val.shape[:2]
-                    vision_tensors = self.vision_proj(MiniMindVLM.get_image_embeddings({k: v.flatten(0, 1) for k, v in pixel_values.items()}, self.vision_encoder)).view(bs, num, self.config.image_token_len, -1)
+                    vision_tensors = self.vision_proj(MiniMindVLM.get_image_embeddings({k: v.flatten(0, 1) for k, v in pixel_values.items()}, self.vision_encoder))
+                    vision_tensors = vision_tensors.view(bs, num, vision_tensors.shape[1], -1)
                 else:
                     vision_tensors = self.vision_proj(MiniMindVLM.get_image_embeddings(pixel_values, self.vision_encoder))
             else:
