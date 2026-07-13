@@ -5,7 +5,7 @@ model/__pycache__/
 out/
 scripts/minimind-3v/
 checkpoints/
-model/siglip2-base-p32-256-ve/
+model/
 website/
 docs-minimind-v/
 测试.py
